@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "girlfriend"
+version = "1.0.0"
+description = "Funny romantic virtual girlfriend assistant for Linux terminal users"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+authors = [
+  { name = "Open Source Contributors" }
+]
+dependencies = [
+  "rich>=13.7.0"
+]
+keywords = ["cli", "linux", "terminal", "fun", "companion", "meme"]
+classifiers = [
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
+  "Operating System :: POSIX :: Linux",
+  "Programming Language :: Python :: 3",
+  "Topic :: Utilities",
+]
+
+[project.scripts]
+girlfriend = "girlfriend.cli:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["girlfriend*"]
+exclude = ["assets*", "screenshots*", "tests*"]

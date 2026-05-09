@@ -1,0 +1,16 @@
+Source: girlfriend
+Section: utils
+Priority: optional
+Maintainer: Open Source Contributors <opensource@example.com>
+Build-Depends: debhelper-compat (= 13), dh-python, python3-all, python3-setuptools
+Standards-Version: 4.6.2
+Rules-Requires-Root: no
+
+Package: girlfriend
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}, python3-rich
+Recommends: libnotify-bin | notify-osd, espeak | espeak-ng
+Description: Funny romantic virtual girlfriend assistant for Linux terminal users
+ girlfriend is a terminal-native companion app with cute messages,
+ streak tracking, ASCII art, Linux system jokes, notifications, voice,
+ and future-ready AI chat architecture.

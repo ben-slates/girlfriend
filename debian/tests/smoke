@@ -1,0 +1,9 @@
+#!/bin/sh
+set -e
+
+echo "[*] Running girlfriend autopkgtest smoke tests..."
+
+girlfriend --help
+girlfriend --version
+
+echo "[+] All smoke tests passed."
