@@ -1,5 +1,7 @@
-girlfriend (1.0.0-1) unstable; urgency=medium
+girlfriend (1.0.0-2) unstable; urgency=medium
 
-  * Initial release.
+  * Fix Debian metadata and packaging warnings.
+  * Add upstream metadata.
+  * Improve package policy compliance.
 
  -- benslates <umerf2700@gmail.com>  Sat, 09 May 2026 00:00:00 +0000

@@ -1,0 +1,4 @@
+version=5
+opts=filenamemangle=s/.+\/v?(\d\S+)\.tar\.gz/girlfriend-$1\.tar\.gz/ \
+https://github.com/ben-slates/girlfriend/tags \
+.*/archive/refs/tags/v?(\d\S+)\.tar\.gz
