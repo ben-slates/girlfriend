@@ -84,7 +84,7 @@ If `debian/changelog` does not use `unstable`, fix it before continuing.
 Edit `debian/changelog` so the first entry looks like this format:
 
 ```text
-girlfriend (1.0.0-1) unstable; urgency=medium
+girlfriend (2.0.0-1) unstable; urgency=medium
 
   * Initial release.
 
@@ -94,7 +94,7 @@ girlfriend (1.0.0-1) unstable; urgency=medium
 You can update it with:
 
 ```bash
-dch --create -v 1.0.0-1 --package girlfriend
+dch --create -v 2.0.0-1 --package girlfriend
 ```
 
 If the file already exists, use:
@@ -150,9 +150,9 @@ ls -la girlfriend_*
 
 You should see files like:
 
-- `girlfriend_1.0.0-1_all.deb`
-- `girlfriend_1.0.0-1_amd64.buildinfo`
-- `girlfriend_1.0.0-1_amd64.changes`
+- `girlfriend_2.0.0-1_all.deb`
+- `girlfriend_2.0.0-1_amd64.buildinfo`
+- `girlfriend_2.0.0-1_amd64.changes`
 
 Then go back:
 
@@ -166,7 +166,7 @@ From the parent directory:
 
 ```bash
 cd ..
-sudo dpkg -i girlfriend_1.0.0-1_all.deb
+sudo dpkg -i girlfriend_2.0.0-1_all.deb
 sudo apt -f install
 ```
 
@@ -237,13 +237,13 @@ cd ..
 Run:
 
 ```bash
-lintian -i -I --pedantic girlfriend_1.0.0-1_all.deb
+lintian -i -I --pedantic girlfriend_2.0.0-1_all.deb
 ```
 
 Also run:
 
 ```bash
-lintian -i -I --pedantic girlfriend_1.0.0-1_amd64.changes
+lintian -i -I --pedantic girlfriend_2.0.0-1_amd64.changes
 ```
 
 Read every error and warning carefully.
@@ -337,13 +337,13 @@ cd /home/ben/Desktop
 Create the upstream tarball:
 
 ```bash
-tar --exclude='./girlfriend/.git' --exclude='./girlfriend/.venv' --exclude='./girlfriend/__pycache__' --exclude='./girlfriend/.pytest_cache' -czf girlfriend_1.0.0.orig.tar.gz girlfriend
+tar --exclude='./girlfriend/.git' --exclude='./girlfriend/.venv' --exclude='./girlfriend/__pycache__' --exclude='./girlfriend/.pytest_cache' -czf girlfriend_2.0.0.orig.tar.gz girlfriend
 ```
 
 Check it exists:
 
 ```bash
-ls -la girlfriend_1.0.0.orig.tar.gz
+ls -la girlfriend_2.0.0.orig.tar.gz
 ```
 
 Go back:
@@ -366,7 +366,7 @@ Check the parent directory:
 
 ```bash
 cd ..
-ls -la girlfriend_1.0.0-1_source.changes girlfriend_1.0.0-1.dsc girlfriend_1.0.0.orig.tar.gz
+ls -la girlfriend_2.0.0-1_source.changes girlfriend_2.0.0-1.dsc girlfriend_2.0.0.orig.tar.gz
 ```
 
 Then return:
@@ -416,7 +416,7 @@ Check the output files:
 
 ```bash
 cd ..
-ls -la girlfriend_1.0.0-1_source.changes girlfriend_1.0.0-1.dsc
+ls -la girlfriend_2.0.0-1_source.changes girlfriend_2.0.0-1.dsc
 ```
 
 ## Step 18. Test in a clean build environment
@@ -449,7 +449,7 @@ cd ..
 Run:
 
 ```bash
-piuparts girlfriend_1.0.0-1_all.deb
+piuparts girlfriend_2.0.0-1_all.deb
 ```
 
 This checks:
@@ -481,7 +481,7 @@ From the parent directory verify these files exist:
 
 ```bash
 cd /home/ben/Desktop
-ls -la girlfriend_1.0.0-1_source.changes girlfriend_1.0.0-1.dsc girlfriend_1.0.0.orig.tar.gz
+ls -la girlfriend_2.0.0-1_source.changes girlfriend_2.0.0-1.dsc girlfriend_2.0.0.orig.tar.gz
 ```
 
 These are the important upload artifacts.
@@ -497,7 +497,7 @@ sudo apt install -y dput
 Upload:
 
 ```bash
-dput mentors girlfriend_1.0.0-1_source.changes
+dput mentors girlfriend_2.0.0-1_source.changes
 ```
 
 Wait for the upload to complete.

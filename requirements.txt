@@ -1,1 +1,2 @@
+google-genai>=1.16.1
 rich>=13.7.0

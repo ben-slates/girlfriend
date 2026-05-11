@@ -30,6 +30,11 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "theme": "wholesome",
     "typing_animation": True,
     "bedtime_hour": 23,
+    "gemini_daily_limit": 50,
+    "gemini_usage": {
+        "date": "",
+        "count": 0,
+    },
 }
 
 

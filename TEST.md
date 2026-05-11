@@ -435,13 +435,13 @@ ls -la ..
 You should see something like:
 
 ```text
-../girlfriend_1.0.0-1_all.deb
+../girlfriend_2.0.0-1_all.deb
 ```
 
 ### Install the `.deb`
 
 ```bash
-sudo dpkg -i ../girlfriend_1.0.0-1_all.deb
+sudo dpkg -i ../girlfriend_2.0.0-1_all.deb
 sudo apt -f install
 ```
 
@@ -570,7 +570,7 @@ girlfriend --help
 girlfriend --no-typing
 deactivate
 dpkg-buildpackage -us -uc -b
-sudo dpkg -i ../girlfriend_1.0.0-1_all.deb
+sudo dpkg -i ../girlfriend_2.0.0-1_all.deb
 girlfriend --help
 girlfriend monitor
 ```

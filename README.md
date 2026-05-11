@@ -1,8 +1,8 @@
 # girlfriend
 
-`girlfriend` is a terminal-native virtual girlfriend assistant for Linux users. It is designed to be cute, funny, nerdy, offline-first, and easy to package as a real command-line application for Debian-based systems.
+`girlfriend` is a terminal-native virtual girlfriend assistant for Linux users. It is designed to be cute, funny, nerdy, local-first, and easy to package as a real command-line application for Debian-based systems.
 
-It prints romantic one-liners, mood-based reactions, system-monitor jokes, voice output, ASCII art, streak tracking, and lightweight offline chat, all from the Linux terminal.
+It prints romantic one-liners, mood-based reactions, system-monitor jokes, voice output, ASCII art, streak tracking, and lightweight chat with local replies plus Gemini fallback, all from the Linux terminal.
 
 ## Why This Project Exists
 
@@ -29,7 +29,7 @@ The result is a meme-worthy terminal app that still tries to behave like a profe
 - Desktop notifications via `notify-send`
 - Voice output via `espeak` or `espeak-ng`
 - Softer feminine offline voice presets such as `cute`, `soft`, and `anime`
-- Rule-based offline chat mode
+- Local-first chat mode with Gemini fallback
 - Rich terminal UI with ASCII branding
 - Python packaging for `pip install .`
 - Debian packaging metadata for `.deb` builds
@@ -55,7 +55,7 @@ The result is a meme-worthy terminal app that still tries to behave like a profe
 ## Sample Output
 
 ```text
-╭───────────────────────────── girlfriend v1.0.0 ──────────────────────────────╮
+╭───────────────────────────── girlfriend v2.0.0 ──────────────────────────────╮
 │                                                                              │
 │  ██████╗ ██╗██████╗ ██╗     ███████╗██████╗ ██╗███████╗███╗   ██╗██████╗     │
 │  ██╔════╝ ██║██╔══██╗██║     ██╔════╝██╔══██╗██║██╔════╝████╗  ██║██╔══██╗   │
@@ -104,7 +104,7 @@ girlfriend --help
 sudo apt update
 sudo apt install -y debhelper-compat dh-python python3-all python3-setuptools python3-rich
 dpkg-buildpackage -us -uc -b
-sudo dpkg -i ../girlfriend_1.0.0-1_all.deb
+sudo dpkg -i ../girlfriend_2.0.0-1_all.deb
 ```
 
 ## Installation Matrix
@@ -326,14 +326,14 @@ dpkg-buildpackage -us -uc -b
 Install generated package:
 
 ```bash
-sudo dpkg -i ../girlfriend_1.0.0-1_all.deb
+sudo dpkg -i ../girlfriend_2.0.0-1_all.deb
 sudo apt -f install
 ```
 
 Run packaging checks:
 
 ```bash
-lintian -i -I --pedantic ../girlfriend_1.0.0-1_all.deb
+lintian -i -I --pedantic ../girlfriend_2.0.0-1_all.deb
 ```
 
 ## Roadmap
@@ -356,7 +356,7 @@ lintian -i -I --pedantic ../girlfriend_1.0.0-1_all.deb
 
 - Ollama integration
 - OpenAI API integration
-- Gemini API integration
+- smarter Gemini prompt styles
 - plugin-style personality packs
 - true distro submission readiness
 

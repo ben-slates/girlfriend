@@ -4,7 +4,8 @@ from __future__ import annotations
 
 import unittest
 
-from girlfriend.ai_chat import categorize_message
+from girlfriend.ai_chat import categorize_message, chat_reply
+from girlfriend.config import DEFAULT_CONFIG
 from girlfriend.messages import COMPLIMENTS, LOVE_QUOTES, RANDOM_MESSAGES
 from girlfriend.moods import get_mood, list_moods
 from girlfriend.system_monitor import detect_distro
@@ -19,6 +20,16 @@ class TestBasic(unittest.TestCase):
     def test_chat_categories(self) -> None:
         self.assertEqual(categorize_message("hello there"), "hello")
         self.assertEqual(categorize_message("I found a bug"), "bug")
+
+    def test_chat_reply_uses_local_for_basic_greeting(self) -> None:
+        result = chat_reply("hey babe", DEFAULT_CONFIG.copy())
+        self.assertEqual(result.source, "local")
+        self.assertTrue(result.text)
+
+    def test_chat_reply_uses_local_for_command_help(self) -> None:
+        result = chat_reply("how do i use streak", DEFAULT_CONFIG.copy())
+        self.assertEqual(result.source, "local")
+        self.assertIn("girlfriend streak", result.text)
 
     def test_message_catalog_sizes(self) -> None:
         self.assertGreaterEqual(len(COMPLIMENTS), 10)

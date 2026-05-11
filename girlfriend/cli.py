@@ -67,7 +67,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("stats", help="Show detailed interaction stats.")
     subparsers.add_parser("monitor", help="Inspect CPU, RAM, disk, and battery with commentary.")
     subparsers.add_parser("speak", help="Speak a fresh message aloud using espeak.")
-    subparsers.add_parser("chat", help="Start local offline chat mode.")
+    subparsers.add_parser("chat", help="Start local-first chat mode with Gemini fallback.")
 
     config_parser = subparsers.add_parser("config", help="View or update config.")
     config_parser.add_argument("--set-name", help="Set preferred display name.")
@@ -222,7 +222,7 @@ def handle_speak(config: dict[str, object]) -> int:
 def handle_chat(config: dict[str, object]) -> int:
     mood_name = str(config.get("preferred_mood", "caring"))
     color = get_mood(mood_name).color
-    console.print(Panel.fit("Offline chat mode. Type `exit` or `quit` to leave.", title="Chat", border_style=color))
+    console.print(Panel.fit("Chat mode. Type `exit` or `quit` to leave.", title="Chat", border_style=color))
     while True:
         try:
             user_input = console.input("[bold cyan]you> [/bold cyan]").strip()
@@ -232,8 +232,8 @@ def handle_chat(config: dict[str, object]) -> int:
         if user_input.lower() in {"exit", "quit"}:
             typing_print("I will be here waiting in your terminal, babe.", color, True)
             return 0
-        reply = chat_reply(user_input)
-        typing_print(f"{get_mood(mood_name).emoji} {reply}", color, bool(config.get("typing_animation", True)))
+        reply = chat_reply(user_input, config)
+        typing_print(f"{get_mood(mood_name).emoji} {reply.text}", color, bool(config.get("typing_animation", True)))
 
 
 def handle_config(args: argparse.Namespace, config: dict[str, object]) -> int:

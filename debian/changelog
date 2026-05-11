@@ -1,4 +1,4 @@
-girlfriend (1.0.0-2) unstable; urgency=medium
+girlfriend (2.0.0-1) unstable; urgency=medium
 
   * Fix Debian metadata and packaging warnings.
   * Add upstream metadata.
