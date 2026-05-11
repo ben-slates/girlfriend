@@ -1,0 +1,2 @@
+[console_scripts]
+girlfriend = girlfriend.cli:main

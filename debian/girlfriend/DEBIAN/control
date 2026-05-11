@@ -1,0 +1,14 @@
+Package: girlfriend
+Version: 2.0.0-1
+Architecture: all
+Maintainer: benjamin <umerf2700@gmail.com>
+Installed-Size: 144
+Depends: python3-rich, python3:any
+Recommends: libnotify-bin | notify-osd, espeak | espeak-ng
+Section: utils
+Priority: optional
+Homepage: https://github.com/ben-slates/girlfriend
+Description: Funny romantic virtual girlfriend assistant for Linux terminal users
+ girlfriend is a terminal-native companion app featuring cute messages,
+ ASCII art, streak tracking, Linux humor, notifications, and optional
+ voice support for Linux terminal users.

@@ -31,6 +31,29 @@ class TestBasic(unittest.TestCase):
         self.assertEqual(result.source, "local")
         self.assertIn("girlfriend streak", result.text)
 
+    def test_default_config_includes_chat_settings(self) -> None:
+        self.assertIn("ai_enabled", DEFAULT_CONFIG)
+        self.assertIn("ai_fallback_enabled", DEFAULT_CONFIG)
+        self.assertIn("gemini_api_key", DEFAULT_CONFIG)
+        self.assertIn("chat_mood", DEFAULT_CONFIG)
+        self.assertIn("chat_theme", DEFAULT_CONFIG)
+        self.assertIn("chat_response_style", DEFAULT_CONFIG)
+
+    def test_chat_reply_respects_ai_disable_flag(self) -> None:
+        config = DEFAULT_CONFIG.copy()
+        config["ai_enabled"] = False
+        result = chat_reply("Explain Linux cgroups and namespaces in detail", config)
+        self.assertEqual(result.source, "disabled")
+        self.assertIn("local-only mode", result.text)
+
+    def test_chat_reply_reports_missing_api_key(self) -> None:
+        config = DEFAULT_CONFIG.copy()
+        config["gemini_api_key"] = ""
+        result = chat_reply("Explain Linux cgroups and namespaces in detail", config)
+        self.assertEqual(result.source, "error")
+        self.assertIn("Gemini API key", result.text)
+        self.assertIn("chat --config", result.text)
+
     def test_message_catalog_sizes(self) -> None:
         self.assertGreaterEqual(len(COMPLIMENTS), 10)
         self.assertGreaterEqual(len(LOVE_QUOTES), 50)

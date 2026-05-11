@@ -1,7 +1,11 @@
-girlfriend (2.0.0-1) unstable; urgency=medium
+girlfriend (3.0.0-1) unstable; urgency=medium
 
-  * Fix Debian metadata and packaging warnings.
-  * Add upstream metadata.
-  * Improve package policy compliance.
+  * Fix installed-package Gemini fallback by loading API keys from config
+    at runtime instead of using a hardcoded client.
+  * Add interactive `girlfriend chat --config` setup for Gemini, fallback,
+    chat mood/theme, response style, and daily AI limits.
+  * Improve Gemini error handling for missing keys, invalid keys, quota
+    limits, offline mode, and API-side failures.
+  * Bump package version to 3.0.0.
 
- -- benslates <umerf2700@gmail.com>  Sat, 09 May 2026 00:00:00 +0000
+ -- benslates <umerf2700@gmail.com>  Tue, 12 May 2026 02:30:00 +0500

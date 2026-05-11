@@ -1,3 +1,22 @@
+Metadata-Version: 2.4
+Name: girlfriend
+Version: 2.0.0
+Summary: Funny romantic virtual girlfriend assistant for Linux terminal users
+Author: Open Source Contributors
+License-Expression: MIT
+Keywords: cli,linux,terminal,fun,companion,meme
+Classifier: Environment :: Console
+Classifier: Intended Audience :: End Users/Desktop
+Classifier: Operating System :: POSIX :: Linux
+Classifier: Programming Language :: Python :: 3
+Classifier: Topic :: Utilities
+Requires-Python: >=3.9
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: google-genai>=1.16.1
+Requires-Dist: rich>=13.7.0
+Dynamic: license-file
+
 # girlfriend
 
 `girlfriend` is a terminal-native virtual girlfriend assistant for Linux users. It is designed to be cute, funny, nerdy, local-first, and easy to package as a real command-line application for Debian-based systems.
@@ -55,7 +74,7 @@ The result is a meme-worthy terminal app that still tries to behave like a profe
 ## Sample Output
 
 ```text
-╭───────────────────────────── girlfriend v3.0.0 ──────────────────────────────╮
+╭───────────────────────────── girlfriend v2.0.0 ──────────────────────────────╮
 │                                                                              │
 │  ██████╗ ██╗██████╗ ██╗     ███████╗██████╗ ██╗███████╗███╗   ██╗██████╗     │
 │  ██╔════╝ ██║██╔══██╗██║     ██╔════╝██╔══██╗██║██╔════╝████╗  ██║██╔══██╗   │
@@ -104,7 +123,7 @@ girlfriend --help
 sudo apt update
 sudo apt install -y debhelper-compat dh-python python3-all python3-setuptools python3-rich
 dpkg-buildpackage -us -uc -b
-sudo dpkg -i ../girlfriend_3.0.0-1_all.deb
+sudo dpkg -i ../girlfriend_2.0.0-1_all.deb
 ```
 
 ## Installation Matrix
@@ -132,7 +151,6 @@ girlfriend stats
 girlfriend monitor
 girlfriend speak
 girlfriend chat
-girlfriend chat --config
 girlfriend notify-test
 ```
 
@@ -146,36 +164,6 @@ girlfriend config --enable-voice
 girlfriend config --set-voice-profile cute
 girlfriend config --set-voice-rate 145
 girlfriend config --set-voice-pitch 72
-```
-
-### AI chat setup
-
-Get a free Gemini API key from:
-
-```text
-https://aistudio.google.com/app/apikey
-```
-
-Then configure chat interactively:
-
-```bash
-girlfriend chat --config
-```
-
-The interactive setup lets you configure:
-
-- Gemini API key
-- AI enabled or disabled
-- AI fallback enabled or disabled
-- Chat mood
-- Chat theme
-- Response style
-- Daily AI usage limit
-
-The Gemini API key is stored in:
-
-```text
-~/.girlfriend/config.json
 ```
 
 ## Mood System
@@ -225,15 +213,8 @@ Example configuration:
 
 ```json
 {
-  "ai_enabled": true,
-  "ai_fallback_enabled": true,
   "bedtime_hour": 23,
-  "chat_mood": "caring",
-  "chat_response_style": "compact",
-  "chat_theme": "wholesome",
   "enable_voice": false,
-  "gemini_api_key": "",
-  "gemini_daily_limit": 50,
   "notification_frequency_minutes": 180,
   "preferred_mood": "caring",
   "theme": "wholesome",
@@ -244,12 +225,6 @@ Example configuration:
   "username": "ben"
 }
 ```
-
-### Chat behavior
-
-- Simple or familiar prompts stay local and offline.
-- Complex prompts can fall back to Gemini automatically when AI is enabled.
-- If Gemini is unavailable, the app now explains whether the issue is a missing key, invalid key, quota, no internet, or a Gemini API outage.
 
 ## Architecture
 
@@ -370,14 +345,14 @@ dpkg-buildpackage -us -uc -b
 Install generated package:
 
 ```bash
-sudo dpkg -i ../girlfriend_3.0.0-1_all.deb
+sudo dpkg -i ../girlfriend_2.0.0-1_all.deb
 sudo apt -f install
 ```
 
 Run packaging checks:
 
 ```bash
-lintian -i -I --pedantic ../girlfriend_3.0.0-1_all.deb
+lintian -i -I --pedantic ../girlfriend_2.0.0-1_all.deb
 ```
 
 ## Roadmap

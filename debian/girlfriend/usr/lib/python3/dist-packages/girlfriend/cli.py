@@ -10,7 +10,6 @@ import time
 from rich.console import Console
 from rich.console import Group
 from rich.panel import Panel
-from rich.prompt import Confirm, IntPrompt, Prompt
 from rich.table import Table
 from . import __version__
 from .ai_chat import chat_reply
@@ -33,7 +32,6 @@ from .voice import list_voice_profiles, speak_text, voice_supported
 console = Console()
 
 THEMES = ["anime", "wholesome", "hacker", "goth", "gamer", "yandere", "cozy"]
-RESPONSE_STYLES = ["compact", "playful", "supportive", "technical", "flirty"]
 
 
 def typing_print(message: str, color: str, enabled: bool) -> None:
@@ -69,8 +67,7 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers.add_parser("stats", help="Show detailed interaction stats.")
     subparsers.add_parser("monitor", help="Inspect CPU, RAM, disk, and battery with commentary.")
     subparsers.add_parser("speak", help="Speak a fresh message aloud using espeak.")
-    chat_parser = subparsers.add_parser("chat", help="Start local-first chat mode with Gemini fallback.")
-    chat_parser.add_argument("--config", action="store_true", help="Configure AI chat settings interactively.")
+    subparsers.add_parser("chat", help="Start local-first chat mode with Gemini fallback.")
 
     config_parser = subparsers.add_parser("config", help="View or update config.")
     config_parser.add_argument("--set-name", help="Set preferred display name.")
@@ -222,109 +219,10 @@ def handle_speak(config: dict[str, object]) -> int:
     return 0
 
 
-def _chat_mood(config: dict[str, object]) -> str:
-    return str(config.get("chat_mood") or config.get("preferred_mood", "caring"))
-
-
-def _chat_theme(config: dict[str, object]) -> str:
-    return str(config.get("chat_theme") or config.get("theme", "wholesome"))
-
-
-def handle_chat_config(config: dict[str, object]) -> int:
-    console.print(
-        Panel.fit(
-            "Tune Gemini access, fallback behavior, and how chat feels without editing JSON by hand.",
-            title="Chat Config",
-            border_style="magenta",
-        )
-    )
-
-    current_key = str(config.get("gemini_api_key", "") or "")
-    masked_key = f"{current_key[:6]}...{current_key[-4:]}" if len(current_key) >= 10 else ("set" if current_key else "not set")
-
-    current_table = Table(title="Current chat settings")
-    current_table.add_column("Setting", style="cyan")
-    current_table.add_column("Value", style="magenta")
-    current_table.add_row("Gemini API key", masked_key)
-    current_table.add_row("AI enabled", str(bool(config.get("ai_enabled", True))))
-    current_table.add_row("AI fallback enabled", str(bool(config.get("ai_fallback_enabled", True))))
-    current_table.add_row("Chat mood", _chat_mood(config))
-    current_table.add_row("Chat theme", _chat_theme(config))
-    current_table.add_row("Response style", str(config.get("chat_response_style", "compact")))
-    current_table.add_row("Daily AI usage limit", str(int(config.get("gemini_daily_limit", 50))))
-    console.print(current_table)
-
-    api_key_prompt = "Gemini API key"
-    if current_key:
-        api_key_prompt += " (press Enter to keep current key)"
-    entered_key = Prompt.ask(api_key_prompt, default="")
-    if entered_key.strip():
-        config["gemini_api_key"] = entered_key.strip()
-
-    config["ai_enabled"] = Confirm.ask(
-        "Enable AI chat",
-        default=bool(config.get("ai_enabled", True)),
-    )
-    config["ai_fallback_enabled"] = Confirm.ask(
-        "Allow Gemini fallback for complex prompts",
-        default=bool(config.get("ai_fallback_enabled", True)),
-    )
-
-    mood_choices = list_moods()
-    theme_choices = list(THEMES)
-    style_choices = list(RESPONSE_STYLES)
-
-    config["chat_mood"] = Prompt.ask(
-        "Chat mood",
-        choices=mood_choices,
-        default=_chat_mood(config),
-    )
-    config["chat_theme"] = Prompt.ask(
-        "Chat theme",
-        choices=theme_choices,
-        default=_chat_theme(config),
-    )
-    config["chat_response_style"] = Prompt.ask(
-        "Response style",
-        choices=style_choices,
-        default=str(config.get("chat_response_style", "compact")),
-    )
-    config["gemini_daily_limit"] = max(
-        1,
-        IntPrompt.ask(
-            "Daily AI usage limit",
-            default=int(config.get("gemini_daily_limit", 50)),
-        ),
-    )
-
-    save_config(config)
-
-    updated_table = Table(title="Saved chat settings")
-    updated_table.add_column("Setting", style="cyan")
-    updated_table.add_column("Value", style="green")
-    updated_table.add_row("Gemini API key", "saved" if str(config.get("gemini_api_key", "") or "").strip() else "not set")
-    updated_table.add_row("AI enabled", str(config["ai_enabled"]))
-    updated_table.add_row("AI fallback enabled", str(config["ai_fallback_enabled"]))
-    updated_table.add_row("Chat mood", str(config["chat_mood"]))
-    updated_table.add_row("Chat theme", str(config["chat_theme"]))
-    updated_table.add_row("Response style", str(config["chat_response_style"]))
-    updated_table.add_row("Daily AI usage limit", str(config["gemini_daily_limit"]))
-    console.print(updated_table)
-    console.print(f"[dim]Config file: {get_config_path()}[/dim]")
-    return 0
-
-
 def handle_chat(config: dict[str, object]) -> int:
-    mood_name = _chat_mood(config)
+    mood_name = str(config.get("preferred_mood", "caring"))
     color = get_mood(mood_name).color
-    theme_name = _chat_theme(config)
-    console.print(
-        Panel.fit(
-            f"Chat mode. Type `exit` or `quit` to leave.\n[dim]theme: {theme_name} • style: {config.get('chat_response_style', 'compact')}[/dim]",
-            title="Chat",
-            border_style=color,
-        )
-    )
+    console.print(Panel.fit("Chat mode. Type `exit` or `quit` to leave.", title="Chat", border_style=color))
     while True:
         try:
             user_input = console.input("[bold cyan]you> [/bold cyan]").strip()
@@ -404,8 +302,6 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "speak":
         return handle_speak(config)
     if args.command == "chat":
-        if getattr(args, "config", False):
-            return handle_chat_config(config)
         return handle_chat(config)
     if args.command == "config":
         return handle_config(args, config)

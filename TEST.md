@@ -10,6 +10,9 @@ You want to verify that:
 - the CLI starts without crashing
 - all core commands work
 - config and streak files are created correctly
+- interactive AI chat configuration works
+- Gemini fallback uses the saved config key correctly
+- AI failures are shown clearly
 - optional Linux integrations behave properly
 - the package installs with `pip`
 - the package can be built and installed as a `.deb`
@@ -23,6 +26,7 @@ Recommended environment:
 - `pip`
 - optional: `espeak`
 - optional: `notify-send` from `libnotify-bin`
+- optional for AI chat setup: Gemini API key from `https://aistudio.google.com/app/apikey`
 - optional for Debian packaging: `debhelper`, `dh-python`, `python3-all`, `python3-setuptools`, `python3-rich`
 
 Check your environment:
@@ -38,7 +42,7 @@ uname -a
 Run all commands from the project root:
 
 ```bash
-cd /home/ben/Desktop/girlfriend
+cd /home/ben/Desktop/girlfriend-release/girlfriend
 ```
 
 ## 1. Quick Smoke Test
@@ -49,6 +53,7 @@ This confirms the app starts and the CLI parser works.
 python3 -m girlfriend.cli --help
 python3 -m girlfriend.cli --version
 python3 -m girlfriend.cli --no-typing
+python3 -m girlfriend.cli chat --help
 ```
 
 Expected result:
@@ -213,6 +218,48 @@ Check:
 - `quit` exits cleanly
 - no crash on normal chat flow
 
+### Interactive AI chat config
+
+```bash
+python3 -m girlfriend.cli chat --config
+```
+
+Walk through these settings:
+
+- leave the API key blank first
+- toggle AI enabled on
+- toggle AI fallback on
+- choose a chat mood
+- choose a chat theme
+- choose a response style
+- set a small daily AI limit such as `3`
+
+Check:
+
+- Rich prompts and tables render correctly
+- settings are saved to `~/.girlfriend/config.json`
+- no manual JSON editing is required
+
+### Gemini key priority and failure handling
+
+Test missing key behavior:
+
+```bash
+GIRLFRIEND_HOME=/tmp/girlfriend-ai-missing python3 -m girlfriend.cli chat
+```
+
+Then ask a complex prompt such as:
+
+- `Explain Linux namespaces and cgroups in simple terms`
+
+Check:
+
+- local/simple prompts still work
+- complex prompts fall through to AI handling
+- missing key error tells you to use `girlfriend chat --config`
+- Gemini fallback can answer complex prompts when the saved key is valid
+- failures are specific for invalid key, quota, offline mode, or API issues
+
 ### Config command
 
 View config:
@@ -235,6 +282,7 @@ Check:
 
 - config updates are displayed
 - later runs reflect the changed mood or theme
+- existing config command still works alongside `chat --config`
 
 Disable voice again if you want:
 
@@ -263,6 +311,7 @@ Check:
 - `config.json` exists
 - `streak.json` exists
 - JSON content is valid
+- new AI keys such as `ai_enabled`, `ai_fallback_enabled`, `gemini_api_key`, `chat_mood`, `chat_theme`, `chat_response_style`, and `gemini_daily_limit` are present after chat setup
 
 If your environment is locked down and home is not writable, the app may fall back to a temporary directory. You can force a custom data directory for testing:
 
@@ -353,6 +402,7 @@ source .venv/bin/activate
 pip install --upgrade pip
 pip install .
 girlfriend --help
+girlfriend chat --help
 girlfriend --no-typing
 girlfriend monitor
 deactivate
@@ -410,7 +460,7 @@ deactivate
 
 ```bash
 sudo apt update
-sudo apt install -y build-essential devscripts debhelper-compat dh-python python3-all python3-setuptools python3-rich
+sudo apt install -y build-essential devscripts debhelper-compat dh-python python3-all python3-setuptools pybuild-plugin-pyproject python3-rich lintian
 ```
 
 ### Build the `.deb`
@@ -435,13 +485,13 @@ ls -la ..
 You should see something like:
 
 ```text
-../girlfriend_2.0.0-1_all.deb
+../girlfriend_3.0.0-1_all.deb
 ```
 
 ### Install the `.deb`
 
 ```bash
-sudo dpkg -i ../girlfriend_2.0.0-1_all.deb
+sudo dpkg -i ../girlfriend_3.0.0-1_all.deb
 sudo apt -f install
 ```
 
@@ -452,6 +502,7 @@ girlfriend --help
 girlfriend --no-typing
 girlfriend compliment
 girlfriend monitor
+girlfriend chat --help
 ```
 
 Check:
@@ -471,6 +522,7 @@ Before release, test this full checklist:
 
 - `python3 -m unittest discover -s tests -v`
 - `python3 -m girlfriend.cli --help`
+- `python3 -m girlfriend.cli --version`
 - `python3 -m girlfriend.cli --no-typing`
 - `python3 -m girlfriend.cli --ascii --no-typing`
 - `python3 -m girlfriend.cli --quote --no-typing`
@@ -479,7 +531,9 @@ Before release, test this full checklist:
 - `python3 -m girlfriend.cli streak`
 - `python3 -m girlfriend.cli stats`
 - `python3 -m girlfriend.cli monitor`
+- `python3 -m girlfriend.cli chat --help`
 - `python3 -m girlfriend.cli chat`
+- `python3 -m girlfriend.cli chat --config`
 - `python3 -m girlfriend.cli config`
 - `python3 -m girlfriend.cli notify-test`
 - `python3 -m girlfriend.cli speak`
@@ -499,7 +553,7 @@ Cause:
 Fix:
 
 ```bash
-cd /home/ben/Desktop/girlfriend
+cd /home/ben/Desktop/girlfriend-release/girlfriend
 pip install .
 ```
 
@@ -544,7 +598,7 @@ Cause:
 Fix:
 
 ```bash
-sudo apt install -y build-essential devscripts debhelper-compat dh-python python3-all python3-setuptools python3-rich
+sudo apt install -y build-essential devscripts debhelper-compat dh-python python3-all python3-setuptools pybuild-plugin-pyproject python3-rich lintian
 ```
 
 ## 12. Recommended Full Test Flow
@@ -552,25 +606,29 @@ sudo apt install -y build-essential devscripts debhelper-compat dh-python python
 If you only want one complete sequence, use this order:
 
 ```bash
-cd /home/ben/Desktop/girlfriend
+cd /home/ben/Desktop/girlfriend-release/girlfriend
 python3 -m unittest discover -s tests -v
 python3 -m girlfriend.cli --help
+python3 -m girlfriend.cli --version
 python3 -m girlfriend.cli --no-typing
 python3 -m girlfriend.cli --ascii --no-typing
 python3 -m girlfriend.cli --quote --no-typing
 python3 -m girlfriend.cli compliment
 python3 -m girlfriend.cli roast
 python3 -m girlfriend.cli monitor
+python3 -m girlfriend.cli chat --help
+python3 -m girlfriend.cli chat --config
 python3 -m girlfriend.cli chat
 python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install .
 girlfriend --help
+girlfriend chat --help
 girlfriend --no-typing
 deactivate
 dpkg-buildpackage -us -uc -b
-sudo dpkg -i ../girlfriend_2.0.0-1_all.deb
+sudo dpkg -i ../girlfriend_3.0.0-1_all.deb
 girlfriend --help
 girlfriend monitor
 ```
@@ -582,6 +640,7 @@ The project is ready for release when:
 - unit tests pass
 - manual CLI checks pass
 - optional integrations fail gracefully when missing
+- AI setup and Gemini fallback behavior are verified
 - `pip install .` works
 - `.deb` builds successfully
 - the installed `girlfriend` command works globally
