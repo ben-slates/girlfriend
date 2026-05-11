@@ -4,11 +4,9 @@ from __future__ import annotations
 
 import socket
 from dataclasses import dataclass
-from datetime import date
 from difflib import SequenceMatcher
 from typing import Any
 
-from .config import save_config
 from .messages import random_chat_reply
 
 try:
@@ -149,35 +147,6 @@ def _normalize_answer(text: str, max_chars: int = 420) -> str:
     return f"{trimmed}..."
 
 
-def _today_string() -> str:
-    return date.today().isoformat()
-
-
-def _gemini_usage_snapshot(config: dict[str, Any]) -> tuple[str, int]:
-    usage = config.get("gemini_usage", {})
-    if not isinstance(usage, dict):
-        usage = {}
-    usage_date = str(usage.get("date", ""))
-    usage_count = int(usage.get("count", 0))
-    if usage_date != _today_string():
-        return _today_string(), 0
-    return usage_date, usage_count
-
-
-def _can_use_gemini(config: dict[str, Any]) -> bool:
-    _, usage_count = _gemini_usage_snapshot(config)
-    limit = int(config.get("gemini_daily_limit", 50))
-    return usage_count < limit
-
-
-def _consume_gemini_request(config: dict[str, Any]) -> int:
-    usage_date, usage_count = _gemini_usage_snapshot(config)
-    updated_count = usage_count + 1
-    config["gemini_usage"] = {"date": usage_date, "count": updated_count}
-    save_config(config)
-    return updated_count
-
-
 def _api_key_from_config(config: dict[str, Any]) -> str:
     return str(config.get("gemini_api_key", "") or "").strip()
 
@@ -304,23 +273,6 @@ def chat_reply(message: str, config: dict[str, Any]) -> ChatResult:
     if category != "default" or _looks_like_local_message(stripped):
         return ChatResult(random_chat_reply(category), "local")
 
-    if not bool(config.get("ai_enabled", True)):
-        return ChatResult(
-            "I am in local-only mode right now because AI chat is turned off. Run `girlfriend chat --config` if you want to switch Gemini back on.",
-            "disabled",
-        )
-    if not bool(config.get("ai_fallback_enabled", True)):
-        return ChatResult(
-            "I am keeping complex chats offline right now because AI fallback is disabled in config.",
-            "disabled",
-        )
-    if not _can_use_gemini(config):
-        limit = int(config.get("gemini_daily_limit", 50))
-        return ChatResult(
-            f"I used all {limit} smart replies for today, so stay with me in local mode for now, okay? Try again tomorrow and I will be extra helpful.",
-            "limit",
-        )
-
     try:
         answer, model_name = _ask_gemini(stripped, config)
     except GeminiError as error:
@@ -329,5 +281,4 @@ def chat_reply(message: str, config: dict[str, Any]) -> ChatResult:
             "error",
         )
 
-    _consume_gemini_request(config)
     return ChatResult(answer, "gemini", model_name)

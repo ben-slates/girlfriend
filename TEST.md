@@ -12,6 +12,7 @@ You want to verify that:
 - config and streak files are created correctly
 - interactive AI chat configuration works
 - Gemini fallback uses the saved config key correctly
+- complex prompts fall through to Gemini automatically
 - AI failures are shown clearly
 - optional Linux integrations behave properly
 - the package installs with `pip`
@@ -126,15 +127,10 @@ Check:
 
 ### ASCII mode
 
-```bash
-python3 -m girlfriend.cli --ascii --no-typing
-python3 -m girlfriend.cli --mood hacker --ascii --no-typing
-```
-
 Check:
 
-- ASCII reaction panel appears
-- default message still appears
+- mood art appears inside the main header block
+- the small art matches the active mood
 - layout does not break in your terminal
 
 ### Quotes
@@ -226,19 +222,17 @@ python3 -m girlfriend.cli chat --config
 
 Walk through these settings:
 
-- leave the API key blank first
-- toggle AI enabled on
-- toggle AI fallback on
+- save the API key
 - choose a chat mood
 - choose a chat theme
 - choose a response style
-- set a small daily AI limit such as `3`
 
 Check:
 
 - Rich prompts and tables render correctly
 - settings are saved to `~/.girlfriend/config.json`
 - no manual JSON editing is required
+- there are no yes or no AI prompts
 
 ### Gemini key priority and failure handling
 
@@ -311,7 +305,7 @@ Check:
 - `config.json` exists
 - `streak.json` exists
 - JSON content is valid
-- new AI keys such as `ai_enabled`, `ai_fallback_enabled`, `gemini_api_key`, `chat_mood`, `chat_theme`, `chat_response_style`, and `gemini_daily_limit` are present after chat setup
+- new chat keys such as `gemini_api_key`, `chat_mood`, `chat_theme`, and `chat_response_style` are present after chat setup
 
 If your environment is locked down and home is not writable, the app may fall back to a temporary directory. You can force a custom data directory for testing:
 
@@ -524,7 +518,6 @@ Before release, test this full checklist:
 - `python3 -m girlfriend.cli --help`
 - `python3 -m girlfriend.cli --version`
 - `python3 -m girlfriend.cli --no-typing`
-- `python3 -m girlfriend.cli --ascii --no-typing`
 - `python3 -m girlfriend.cli --quote --no-typing`
 - `python3 -m girlfriend.cli compliment`
 - `python3 -m girlfriend.cli roast`
@@ -611,7 +604,6 @@ python3 -m unittest discover -s tests -v
 python3 -m girlfriend.cli --help
 python3 -m girlfriend.cli --version
 python3 -m girlfriend.cli --no-typing
-python3 -m girlfriend.cli --ascii --no-typing
 python3 -m girlfriend.cli --quote --no-typing
 python3 -m girlfriend.cli compliment
 python3 -m girlfriend.cli roast

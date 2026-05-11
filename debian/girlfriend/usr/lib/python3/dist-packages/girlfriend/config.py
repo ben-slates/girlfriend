@@ -8,6 +8,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
+
 def _resolve_app_dir() -> Path:
     override = os.environ.get("GIRLFRIEND_HOME")
     if override:
@@ -30,11 +31,10 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "theme": "wholesome",
     "typing_animation": True,
     "bedtime_hour": 23,
-    "gemini_daily_limit": 50,
-    "gemini_usage": {
-        "date": "",
-        "count": 0,
-    },
+    "gemini_api_key": "",
+    "chat_mood": "",
+    "chat_theme": "",
+    "chat_response_style": "compact",
 }
 
 

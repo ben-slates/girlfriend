@@ -41,7 +41,7 @@ The result is a meme-worthy terminal app that still tries to behave like a profe
 | --- | --- |
 | Default mode | Prints a random romantic or funny message |
 | Moods | `caring`, `jealous`, `hacker`, `clingy`, `sleepy`, `gamer`, `motivational` |
-| ASCII mode | Shows terminal-friendly reaction art |
+| Mood art | Shows terminal-friendly mood art inside the main header |
 | Compliment mode | Prints nerdy, affectionate one-liners |
 | Roast mode | Gentle Linux-user roasts |
 | Streaks | Tracks daily usage in `~/.girlfriend/` |
@@ -123,7 +123,6 @@ sudo dpkg -i ../girlfriend_3.0.0-1_all.deb
 ```bash
 girlfriend
 girlfriend --mood hacker
-girlfriend --ascii
 girlfriend --quote
 girlfriend compliment
 girlfriend roast
@@ -165,12 +164,9 @@ girlfriend chat --config
 The interactive setup lets you configure:
 
 - Gemini API key
-- AI enabled or disabled
-- AI fallback enabled or disabled
 - Chat mood
 - Chat theme
 - Response style
-- Daily AI usage limit
 
 The Gemini API key is stored in:
 
@@ -225,15 +221,12 @@ Example configuration:
 
 ```json
 {
-  "ai_enabled": true,
-  "ai_fallback_enabled": true,
   "bedtime_hour": 23,
   "chat_mood": "caring",
   "chat_response_style": "compact",
   "chat_theme": "wholesome",
   "enable_voice": false,
   "gemini_api_key": "",
-  "gemini_daily_limit": 50,
   "notification_frequency_minutes": 180,
   "preferred_mood": "caring",
   "theme": "wholesome",
@@ -248,7 +241,8 @@ Example configuration:
 ### Chat behavior
 
 - Simple or familiar prompts stay local and offline.
-- Complex prompts can fall back to Gemini automatically when AI is enabled.
+- Complex prompts fall back to Gemini automatically when they are not handled locally.
+- Gemini request usage is not rate-limited by the app when you use your own API key.
 - If Gemini is unavailable, the app now explains whether the issue is a missing key, invalid key, quota, no internet, or a Gemini API outage.
 
 ## Architecture
@@ -347,7 +341,7 @@ python3 -m unittest discover -s tests -v
 ```bash
 python3 -m girlfriend.cli --help
 python3 -m girlfriend.cli --no-typing
-python3 -m girlfriend.cli --mood sleepy --ascii --no-typing
+python3 -m girlfriend.cli --mood sleepy --no-typing
 python3 -m girlfriend.cli monitor
 python3 -m girlfriend.cli config
 ```

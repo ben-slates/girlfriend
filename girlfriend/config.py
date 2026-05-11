@@ -31,17 +31,10 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "theme": "wholesome",
     "typing_animation": True,
     "bedtime_hour": 23,
-    "ai_enabled": True,
-    "ai_fallback_enabled": True,
     "gemini_api_key": "",
-    "gemini_daily_limit": 50,
     "chat_mood": "",
     "chat_theme": "",
     "chat_response_style": "compact",
-    "gemini_usage": {
-        "date": "",
-        "count": 0,
-    },
 }
 
 
@@ -80,12 +73,6 @@ def load_config() -> dict[str, Any]:
 
     merged = DEFAULT_CONFIG.copy()
     merged.update(content)
-    default_usage = DEFAULT_CONFIG["gemini_usage"]
-    loaded_usage = content.get("gemini_usage", {})
-    if isinstance(loaded_usage, dict):
-        merged["gemini_usage"] = {**default_usage, **loaded_usage}
-    else:
-        merged["gemini_usage"] = default_usage.copy()
     return merged
 
 

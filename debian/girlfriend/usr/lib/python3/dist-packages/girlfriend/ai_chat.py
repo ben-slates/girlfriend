@@ -2,12 +2,11 @@
 
 from __future__ import annotations
 
+import socket
 from dataclasses import dataclass
-from datetime import date
 from difflib import SequenceMatcher
 from typing import Any
 
-from .config import save_config
 from .messages import random_chat_reply
 
 try:
@@ -16,15 +15,12 @@ except ImportError:  # pragma: no cover - depends on optional runtime install
     genai = None
 
 
-GEMINI_API_KEY = "AIzaSyAHVb-xvWrde9DBJKEPEgHyVKMbfHlzY9k"
 DEFAULT_MODELS = [
     "gemini-2.5-flash",
     "gemini-3-flash",
     "gemini-3.1-flash-lite",
     "gemini-2.5-flash-lite",
 ]
-
-_GEMINI_CLIENT = genai.Client(api_key=GEMINI_API_KEY) if genai is not None else None
 _LOCAL_KEYWORDS = (
     "hello",
     "hi",
@@ -63,6 +59,13 @@ class ChatResult:
     text: str
     source: str
     model: str = ""
+
+
+class GeminiError(RuntimeError):
+    def __init__(self, user_message: str, *, reason: str) -> None:
+        super().__init__(user_message)
+        self.user_message = user_message
+        self.reason = reason
 
 
 def categorize_message(message: str) -> str:
@@ -144,52 +147,99 @@ def _normalize_answer(text: str, max_chars: int = 420) -> str:
     return f"{trimmed}..."
 
 
-def _today_string() -> str:
-    return date.today().isoformat()
+def _api_key_from_config(config: dict[str, Any]) -> str:
+    return str(config.get("gemini_api_key", "") or "").strip()
 
 
-def _gemini_usage_snapshot(config: dict[str, Any]) -> tuple[str, int]:
-    usage = config.get("gemini_usage", {})
-    if not isinstance(usage, dict):
-        usage = {}
-    usage_date = str(usage.get("date", ""))
-    usage_count = int(usage.get("count", 0))
-    if usage_date != _today_string():
-        return _today_string(), 0
-    return usage_date, usage_count
+def _has_internet_connection(timeout: float = 2.0) -> bool:
+    try:
+        with socket.create_connection(("8.8.8.8", 53), timeout=timeout):
+            return True
+    except OSError:
+        return False
 
 
-def _can_use_gemini(config: dict[str, Any]) -> bool:
-    _, usage_count = _gemini_usage_snapshot(config)
-    limit = int(config.get("gemini_daily_limit", 50))
-    return usage_count < limit
+def _build_gemini_client(config: dict[str, Any]) -> Any:
+    if genai is None:
+        raise GeminiError(
+            "Gemini support is not installed right now. Reinstall the app with its Python dependencies and try again.",
+            reason="sdk-missing",
+        )
+
+    api_key = _api_key_from_config(config)
+    if not api_key:
+        raise GeminiError(
+            "I need a Gemini API key before I can use my online brain. Run `girlfriend chat --config` and save it there first.",
+            reason="missing-key",
+        )
+
+    try:
+        return genai.Client(api_key=api_key)
+    except Exception as error:  # pragma: no cover - SDK behavior varies by version
+        raise GeminiError(
+            "I could not initialize Gemini with that API key. Please double-check it in `girlfriend chat --config`.",
+            reason=f"client-init:{error}",
+        ) from error
 
 
-def _consume_gemini_request(config: dict[str, Any]) -> int:
-    usage_date, usage_count = _gemini_usage_snapshot(config)
-    updated_count = usage_count + 1
-    config["gemini_usage"] = {"date": usage_date, "count": updated_count}
-    save_config(config)
-    return updated_count
+def _classify_gemini_error(error: Exception) -> GeminiError:
+    message = str(error).lower()
+
+    if any(marker in message for marker in ("api key not valid", "invalid api key", "invalid argument", "unauthenticated", "authentication", "permission denied", "403")):
+        return GeminiError(
+            "That Gemini API key looks invalid. Open `girlfriend chat --config`, paste a fresh key, and try again.",
+            reason=f"invalid-key:{error}",
+        )
+    if any(marker in message for marker in ("quota", "rate limit", "resource exhausted", "429", "billing")):
+        return GeminiError(
+            "Your Gemini free quota looks used up right now. Please wait a bit or use a fresh quota window and try again.",
+            reason=f"quota:{error}",
+        )
+    if any(marker in message for marker in ("timeout", "timed out", "deadline exceeded")):
+        return GeminiError(
+            "Gemini took too long to answer just now. Please try that question again in a moment.",
+            reason=f"timeout:{error}",
+        )
+    if any(marker in message for marker in ("503", "500", "502", "overload", "overloaded", "unavailable", "internal")):
+        return GeminiError(
+            "Gemini is having a rough moment on Google's side right now. Please try again soon.",
+            reason=f"service:{error}",
+        )
+    if any(marker in message for marker in ("connection", "dns", "network", "name resolution", "temporary failure", "unreachable", "refused")):
+        return GeminiError(
+            "I cannot reach Gemini right now because the network looks down. Please check your internet connection and try again.",
+            reason=f"network:{error}",
+        )
+    return GeminiError(
+        "Gemini had an unexpected API problem just now. Please try again in a moment.",
+        reason=f"unknown:{error}",
+    )
 
 
-def _ask_gemini(message: str) -> tuple[str, str]:
-    if _GEMINI_CLIENT is None:
-        raise RuntimeError("Gemini SDK is not installed.")
+def _ask_gemini(message: str, config: dict[str, Any]) -> tuple[str, str]:
+    client = _build_gemini_client(config)
+    if not _has_internet_connection():
+        raise GeminiError(
+            "I cannot reach Gemini right now because there is no internet connection. I can still stay in local mode with you.",
+            reason="offline",
+        )
 
     prompt = (
         "You are a virtual girlfriend replying inside a Linux terminal chat app. "
         "Answer in a warm, cute, supportive girlfriend style. Keep it short, natural, "
         "and in one compact paragraph. Help with spelling mistakes and unclear phrasing "
         "without calling them out harshly. If the user asks about this app's commands, "
-        "briefly mention the relevant command. User message: "
+        "briefly mention the relevant command. "
+        f"Response style: {config.get('chat_response_style', 'compact')}. "
+        f"Current chat mood: {config.get('chat_mood') or config.get('preferred_mood', 'caring')}. "
+        "User message: "
         f"{message}"
     )
 
     errors: list[str] = []
     for model_name in _get_model_list():
         try:
-            response = _GEMINI_CLIENT.models.generate_content(
+            response = client.models.generate_content(
                 model=model_name,
                 contents=prompt,
             )
@@ -198,11 +248,16 @@ def _ask_gemini(message: str) -> tuple[str, str]:
                 return answer, model_name
             errors.append(f"{model_name}: empty response")
         except Exception as error:
-            errors.append(f"{model_name}: {error}")
+            classified = _classify_gemini_error(error)
+            errors.append(f"{model_name}: {classified.reason}")
             if not _is_retryable_model_error(error):
-                continue
-    joined_errors = " | ".join(errors) if errors else "No Gemini models configured"
-    raise RuntimeError(f"All Gemini models failed. {joined_errors}")
+                raise classified from error
+    if errors:
+        raise GeminiError(
+            "Gemini did not return a usable answer right now. Please try again in a moment.",
+            reason="all-models-failed: " + " | ".join(errors),
+        )
+    raise GeminiError("No Gemini models are configured for chat fallback.", reason="no-models")
 
 
 def chat_reply(message: str, config: dict[str, Any]) -> ChatResult:
@@ -218,19 +273,12 @@ def chat_reply(message: str, config: dict[str, Any]) -> ChatResult:
     if category != "default" or _looks_like_local_message(stripped):
         return ChatResult(random_chat_reply(category), "local")
 
-    if not _can_use_gemini(config):
-        return ChatResult(
-            "I used all 50 smart replies for today, so stay with me in local mode for now, okay? Try again tomorrow and I will be extra helpful.",
-            "limit",
-        )
-
     try:
-        answer, model_name = _ask_gemini(stripped)
-    except Exception:
+        answer, model_name = _ask_gemini(stripped, config)
+    except GeminiError as error:
         return ChatResult(
-            "My online brain is being shy right now, so stay with me a little simpler for a bit and try again soon.",
+            error.user_message,
             "error",
         )
 
-    _consume_gemini_request(config)
     return ChatResult(answer, "gemini", model_name)

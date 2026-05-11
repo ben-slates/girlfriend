@@ -7,10 +7,11 @@ import random
 import sys
 import time
 
+from rich.align import Align
 from rich.console import Console
 from rich.console import Group
 from rich.panel import Panel
-from rich.prompt import Confirm, IntPrompt, Prompt
+from rich.prompt import Prompt
 from rich.table import Table
 from . import __version__
 from .ai_chat import chat_reply
@@ -50,11 +51,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="girlfriend",
         description="Funny romantic virtual girlfriend assistant for Linux terminal users.",
-        epilog="Example: girlfriend --mood hacker --ascii | girlfriend monitor | girlfriend chat",
+        epilog="Example: girlfriend --mood hacker | girlfriend monitor | girlfriend chat",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--mood", choices=list_moods(), help="Select a personality mood.")
-    parser.add_argument("--ascii", action="store_true", dest="ascii_mode", help="Show a random ASCII reaction.")
     parser.add_argument("--quote", action="store_true", help="Show a random love quote.")
     parser.add_argument("--theme", choices=THEMES, help="Temporarily override the theme.")
     parser.add_argument("--notify", action="store_true", help="Send the selected message as a desktop notification.")
@@ -91,6 +91,12 @@ def header(config: dict[str, object], mood_name: str, message: str | None = None
     theme = config.get("theme", "wholesome")
     username = str(config.get("username") or "cutie")
     mood = get_mood(mood_name)
+    art_panel = Panel.fit(
+        random_reaction(mood.name),
+        title=f"{mood.name} art",
+        border_style="bright_white",
+        padding=(0, 1),
+    )
     top_block = "\n".join(
         [
             LOGO.strip("\n"),
@@ -117,6 +123,8 @@ def header(config: dict[str, object], mood_name: str, message: str | None = None
         [
             "",
             f"[dim]mood: {mood.name} • theme: {theme} • operator: {username}[/dim]",
+            "",
+            Align.right(art_panel),
         ]
     )
     console.print(
@@ -151,8 +159,6 @@ def build_message(args: argparse.Namespace, config: dict[str, object]) -> tuple[
 def handle_default(args: argparse.Namespace, config: dict[str, object]) -> int:
     mood_name, message = build_message(args, config)
     header(config, mood_name, message)
-    if args.ascii_mode:
-        console.print(Panel.fit(random_reaction(), border_style=get_mood(mood_name).color, title="Reaction"))
 
     stats = update_streak()
     console.print(f"[dim]streak: {stats.current_streak} day(s) • total chats: {stats.total_interactions}[/dim]")
@@ -172,13 +178,17 @@ def handle_default(args: argparse.Namespace, config: dict[str, object]) -> int:
     return 0
 
 
-def handle_streak() -> int:
+def handle_streak(config: dict[str, object]) -> int:
+    mood_name = str(config.get("preferred_mood", "caring"))
+    header(config, mood_name, "Your streak report is ready.")
     stats = get_streak_stats()
     console.print(Panel.fit(f"Current streak: {stats.current_streak} day(s)\nLongest streak: {stats.longest_streak} day(s)\nLast seen: {stats.last_seen or 'never'}", title="Streak", border_style="magenta"))
     return 0
 
 
-def handle_stats() -> int:
+def handle_stats(config: dict[str, object]) -> int:
+    mood_name = str(config.get("preferred_mood", "caring"))
+    header(config, mood_name, "Here is your little romance report.")
     stats = get_streak_stats()
     table = Table(title="girlfriend stats")
     table.add_column("Metric", style="cyan")
@@ -192,7 +202,9 @@ def handle_stats() -> int:
     return 0
 
 
-def handle_monitor() -> int:
+def handle_monitor(config: dict[str, object]) -> int:
+    mood_name = str(config.get("preferred_mood", "caring"))
+    header(config, mood_name, "Reading your machine with affection and suspicion.")
     stats = collect_stats()
     table = Table(title=f"System monitor • {stats.distro}")
     table.add_column("Signal", style="cyan")
@@ -209,6 +221,7 @@ def handle_monitor() -> int:
 def handle_speak(config: dict[str, object]) -> int:
     mood_name = str(config.get("preferred_mood", "caring"))
     message = f"{get_mood(mood_name).emoji} {random_message(mood_name)}"
+    header(config, mood_name, "Voice mode is warming up.")
     console.print(message)
     if not voice_supported():
         console.print("[yellow]espeak or espeak-ng is not installed, so I could not speak aloud.[/yellow]")
@@ -233,7 +246,7 @@ def _chat_theme(config: dict[str, object]) -> str:
 def handle_chat_config(config: dict[str, object]) -> int:
     console.print(
         Panel.fit(
-            "Tune Gemini access, fallback behavior, and how chat feels without editing JSON by hand.",
+            "Tune Gemini access and how chat feels without editing JSON by hand.",
             title="Chat Config",
             border_style="magenta",
         )
@@ -246,12 +259,9 @@ def handle_chat_config(config: dict[str, object]) -> int:
     current_table.add_column("Setting", style="cyan")
     current_table.add_column("Value", style="magenta")
     current_table.add_row("Gemini API key", masked_key)
-    current_table.add_row("AI enabled", str(bool(config.get("ai_enabled", True))))
-    current_table.add_row("AI fallback enabled", str(bool(config.get("ai_fallback_enabled", True))))
     current_table.add_row("Chat mood", _chat_mood(config))
     current_table.add_row("Chat theme", _chat_theme(config))
     current_table.add_row("Response style", str(config.get("chat_response_style", "compact")))
-    current_table.add_row("Daily AI usage limit", str(int(config.get("gemini_daily_limit", 50))))
     console.print(current_table)
 
     api_key_prompt = "Gemini API key"
@@ -260,15 +270,6 @@ def handle_chat_config(config: dict[str, object]) -> int:
     entered_key = Prompt.ask(api_key_prompt, default="")
     if entered_key.strip():
         config["gemini_api_key"] = entered_key.strip()
-
-    config["ai_enabled"] = Confirm.ask(
-        "Enable AI chat",
-        default=bool(config.get("ai_enabled", True)),
-    )
-    config["ai_fallback_enabled"] = Confirm.ask(
-        "Allow Gemini fallback for complex prompts",
-        default=bool(config.get("ai_fallback_enabled", True)),
-    )
 
     mood_choices = list_moods()
     theme_choices = list(THEMES)
@@ -289,13 +290,6 @@ def handle_chat_config(config: dict[str, object]) -> int:
         choices=style_choices,
         default=str(config.get("chat_response_style", "compact")),
     )
-    config["gemini_daily_limit"] = max(
-        1,
-        IntPrompt.ask(
-            "Daily AI usage limit",
-            default=int(config.get("gemini_daily_limit", 50)),
-        ),
-    )
 
     save_config(config)
 
@@ -303,12 +297,9 @@ def handle_chat_config(config: dict[str, object]) -> int:
     updated_table.add_column("Setting", style="cyan")
     updated_table.add_column("Value", style="green")
     updated_table.add_row("Gemini API key", "saved" if str(config.get("gemini_api_key", "") or "").strip() else "not set")
-    updated_table.add_row("AI enabled", str(config["ai_enabled"]))
-    updated_table.add_row("AI fallback enabled", str(config["ai_fallback_enabled"]))
     updated_table.add_row("Chat mood", str(config["chat_mood"]))
     updated_table.add_row("Chat theme", str(config["chat_theme"]))
     updated_table.add_row("Response style", str(config["chat_response_style"]))
-    updated_table.add_row("Daily AI usage limit", str(config["gemini_daily_limit"]))
     console.print(updated_table)
     console.print(f"[dim]Config file: {get_config_path()}[/dim]")
     return 0
@@ -318,6 +309,7 @@ def handle_chat(config: dict[str, object]) -> int:
     mood_name = _chat_mood(config)
     color = get_mood(mood_name).color
     theme_name = _chat_theme(config)
+    header(config, mood_name, "Chat mode is open. Ask me anything.")
     console.print(
         Panel.fit(
             f"Chat mode. Type `exit` or `quit` to leave.\n[dim]theme: {theme_name} • style: {config.get('chat_response_style', 'compact')}[/dim]",
@@ -368,6 +360,8 @@ def handle_config(args: argparse.Namespace, config: dict[str, object]) -> int:
         save_config(config)
         console.print("[green]Config updated.[/green]")
 
+    mood_name = str(config.get("preferred_mood", "caring"))
+    header(config, mood_name, "Config loaded and ready.")
     table = Table(title="girlfriend config")
     table.add_column("Key", style="cyan")
     table.add_column("Value", style="magenta")
@@ -379,6 +373,9 @@ def handle_config(args: argparse.Namespace, config: dict[str, object]) -> int:
 
 
 def handle_notify_test() -> int:
+    config = load_config()
+    mood_name = str(config.get("preferred_mood", "caring"))
+    header(config, mood_name, "Testing desktop affection delivery.")
     if not notification_supported():
         console.print("[yellow]notify-send is not installed.[/yellow]")
         return 1
@@ -396,11 +393,11 @@ def main(argv: list[str] | None = None) -> int:
         config["theme"] = args.theme
 
     if args.command == "streak":
-        return handle_streak()
+        return handle_streak(config)
     if args.command == "stats":
-        return handle_stats()
+        return handle_stats(config)
     if args.command == "monitor":
-        return handle_monitor()
+        return handle_monitor(config)
     if args.command == "speak":
         return handle_speak(config)
     if args.command == "chat":

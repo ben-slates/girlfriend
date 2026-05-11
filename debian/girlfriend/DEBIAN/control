@@ -1,8 +1,8 @@
 Package: girlfriend
-Version: 2.0.0-1
+Version: 3.0.0-1
 Architecture: all
 Maintainer: benjamin <umerf2700@gmail.com>
-Installed-Size: 144
+Installed-Size: 183
 Depends: python3-rich, python3:any
 Recommends: libnotify-bin | notify-osd, espeak | espeak-ng
 Section: utils

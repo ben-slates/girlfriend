@@ -5,6 +5,7 @@ from __future__ import annotations
 import unittest
 
 from girlfriend.ai_chat import categorize_message, chat_reply
+from girlfriend.ascii_art import MOOD_REACTIONS, random_reaction
 from girlfriend.config import DEFAULT_CONFIG
 from girlfriend.messages import COMPLIMENTS, LOVE_QUOTES, RANDOM_MESSAGES
 from girlfriend.moods import get_mood, list_moods
@@ -32,19 +33,10 @@ class TestBasic(unittest.TestCase):
         self.assertIn("girlfriend streak", result.text)
 
     def test_default_config_includes_chat_settings(self) -> None:
-        self.assertIn("ai_enabled", DEFAULT_CONFIG)
-        self.assertIn("ai_fallback_enabled", DEFAULT_CONFIG)
         self.assertIn("gemini_api_key", DEFAULT_CONFIG)
         self.assertIn("chat_mood", DEFAULT_CONFIG)
         self.assertIn("chat_theme", DEFAULT_CONFIG)
         self.assertIn("chat_response_style", DEFAULT_CONFIG)
-
-    def test_chat_reply_respects_ai_disable_flag(self) -> None:
-        config = DEFAULT_CONFIG.copy()
-        config["ai_enabled"] = False
-        result = chat_reply("Explain Linux cgroups and namespaces in detail", config)
-        self.assertEqual(result.source, "disabled")
-        self.assertIn("local-only mode", result.text)
 
     def test_chat_reply_reports_missing_api_key(self) -> None:
         config = DEFAULT_CONFIG.copy()
@@ -53,6 +45,15 @@ class TestBasic(unittest.TestCase):
         self.assertEqual(result.source, "error")
         self.assertIn("Gemini API key", result.text)
         self.assertIn("chat --config", result.text)
+
+    def test_ascii_art_supports_mood_specific_reactions(self) -> None:
+        self.assertIn("caring", MOOD_REACTIONS)
+        self.assertIn("hacker", MOOD_REACTIONS)
+        self.assertTrue(MOOD_REACTIONS["sleepy"])
+
+    def test_random_reaction_accepts_unknown_mood(self) -> None:
+        reaction = random_reaction("unknown")
+        self.assertTrue(reaction.strip())
 
     def test_message_catalog_sizes(self) -> None:
         self.assertGreaterEqual(len(COMPLIMENTS), 10)
